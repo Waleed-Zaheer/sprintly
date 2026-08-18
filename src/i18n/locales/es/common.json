@@ -1,0 +1,21 @@
+{
+  "nav": {
+    "features": "Funciones",
+    "pricing": "Precios",
+    "login": "Iniciar sesión",
+    "getStarted": "Comenzar"
+  },
+  "hero": {
+    "titlePrefix": "Controla sprints y tiempo",
+    "titleHighlight": "sin tareas tediosas",
+    "subtitle": "Sprintly ofrece a personas y empresas un solo lugar para planear sprints, registrar tiempo y saber exactamente en qué se fue cada hora.",
+    "cta": "Empieza gratis por un día",
+    "ctaSecondary": "Ver precios"
+  },
+  "pricing": {
+    "title": "Planes simples que crecen contigo",
+    "subtitle": "Empieza gratis, mejora cuando estés listo.",
+    "perMonth": "/mes",
+    "seats": "puestos"
+  }
+}

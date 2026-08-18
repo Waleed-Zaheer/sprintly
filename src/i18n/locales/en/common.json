@@ -1,0 +1,21 @@
+{
+  "nav": {
+    "features": "Features",
+    "pricing": "Pricing",
+    "login": "Log in",
+    "getStarted": "Get started"
+  },
+  "hero": {
+    "titlePrefix": "Track sprints and time",
+    "titleHighlight": "without the busywork",
+    "subtitle": "Sprintly gives individuals and companies one place to plan sprints, track time, and know exactly where every hour went.",
+    "cta": "Start free for a day",
+    "ctaSecondary": "See pricing"
+  },
+  "pricing": {
+    "title": "Simple plans that scale with you",
+    "subtitle": "Start free, upgrade when you're ready.",
+    "perMonth": "/month",
+    "seats": "seats"
+  }
+}
