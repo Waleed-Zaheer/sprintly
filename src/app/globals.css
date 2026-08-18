@@ -1,26 +1,182 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* A warm, slightly off-white neutral base instead of the cool blue-gray
+     that reads as "default SaaS template" — same lightness/contrast levels,
+     just a warmer hue temperature (Notion/Linear-adjacent, not sterile). */
+  --background: #faf9f6;
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --foreground: #1a1815;
+  --muted: #6f6a62;
+  --border: #e7e2da;
+
+  --primary: #6d5efc;
+  --primary-hover: #5a4ce0;
+  --primary-foreground: #ffffff;
+  --accent: #22d3c5;
+  --accent-secondary: #ff7a59;
+
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+
+  --ring: #6d5efc;
+
+  /* shadcn-style semantic layer, aliased onto the tokens above so components
+     ported from the my-snippets registry (Button/Card/Badge/Input/etc.) work
+     without modification. --muted keeps meaning "muted text" as it already
+     did everywhere in this app; --muted-foreground is a same-value alias for
+     ported components that expect that exact name. */
+  --card: var(--surface);
+  --card-foreground: var(--foreground);
+  --popover: var(--surface-raised);
+  --popover-foreground: var(--foreground);
+  --secondary: var(--border);
+  --secondary-foreground: var(--foreground);
+  --muted-foreground: var(--muted);
+  --destructive: var(--danger);
+  --destructive-foreground: #ffffff;
+  /* Distinct from --border (was aliased to it) — that made every resting
+     input read as a near-invisible, washed-out fill against the card
+     surface, which looked disabled rather than interactive. */
+  --input: #f1ede4;
+  --radius: 0.625rem;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-secondary: var(--accent-secondary);
+
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-bricolage);
+
+  /* Tailwind v4's default radius scale stops at 3xl; the ported components
+     use rounded-4xl for their signature soft/pill look. */
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+.dark {
+  --background: #131110;
+  --surface: #1c1917;
+  --surface-raised: #23201d;
+  --foreground: #f5f2ed;
+  --muted: #a39d92;
+  --border: #2c2724;
+
+  --primary: #8b7dff;
+  --primary-hover: #a396ff;
+  --primary-foreground: #0a0a12;
+  --accent: #2ee6d6;
+  --accent-secondary: #ff8f73;
+
+  --card: var(--surface);
+  --card-foreground: var(--foreground);
+  --popover: var(--surface-raised);
+  --popover-foreground: var(--foreground);
+  --secondary: var(--border);
+  --secondary-foreground: var(--foreground);
+  --muted-foreground: var(--muted);
+  --destructive: var(--danger);
+  --destructive-foreground: #ffffff;
+  --input: #29241f;
+}
+
+* {
+  border-color: var(--border);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.border-border {
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.gradient-text {
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* A marker-highlight stroke behind text, not another gradient — used for
+   the one emphasized phrase per page instead of gradient-text, so the
+   gradient wordmark stays the single, deliberate brand device rather than
+   a decoration reused on every heading. */
+.text-highlight {
+  background-image: linear-gradient(
+    to right,
+    color-mix(in oklch, var(--accent) 45%, transparent),
+    color-mix(in oklch, var(--accent) 45%, transparent)
+  );
+  background-repeat: no-repeat;
+  background-size: 100% 0.32em;
+  background-position: 0 92%;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  padding: 0 0.05em;
+}
+
+::selection {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.bg-grid {
+  background-image:
+    linear-gradient(to right, var(--border) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--border) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black 40%, transparent 100%);
+}
+
+.hero-glow {
+  background: radial-gradient(circle, var(--primary) 0%, transparent 65%);
+  opacity: 0.18;
+  filter: blur(40px);
+}
+
+/* Tailwind's preflight resets <button> to cursor: default. Scoped to the
+   Button component specifically (its data-slot, set in button.tsx) rather
+   than every native <button> on the page, so one-off buttons elsewhere
+   keep their own intentional styling. */
+[data-slot="button"] {
+  cursor: pointer;
+}
+
+[data-slot="button"]:disabled,
+[data-slot="button"][data-disabled] {
+  cursor: not-allowed;
 }
