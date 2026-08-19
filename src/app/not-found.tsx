@@ -1,15 +1,13 @@
 import Link from "next/link";
-import { Compass, Zap } from "lucide-react";
+import { Compass } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
+import { Logo } from "@/components/Logo";
 
 export default function NotFound() {
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-6 py-24 text-center">
-      <Link href="/" className="mb-8 flex items-center gap-2 font-heading text-lg font-bold tracking-tight">
-        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-          <Zap className="h-4 w-4" fill="currentColor" strokeWidth={0} />
-        </span>
-        Sprint<span className="gradient-text">ly</span>
+      <Link href="/" className="mb-8">
+        <Logo />
       </Link>
 
       <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">

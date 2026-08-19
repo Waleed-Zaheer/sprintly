@@ -1,0 +1,21 @@
+{
+  "nav": {
+    "features": "功能",
+    "pricing": "定价",
+    "login": "登录",
+    "getStarted": "开始使用"
+  },
+  "hero": {
+    "titlePrefix": "跟踪冲刺和时间",
+    "titleHighlight": "告别繁琐工作",
+    "subtitle": "Sprintly 为个人和企业提供一个统一的平台，用于规划冲刺、跟踪时间，并清楚了解每一小时的去向。",
+    "cta": "免费试用一天",
+    "ctaSecondary": "查看定价"
+  },
+  "pricing": {
+    "title": "简单的套餐，随你成长",
+    "subtitle": "免费开始，准备好后再升级。",
+    "perMonth": "/月",
+    "seats": "个席位"
+  }
+}

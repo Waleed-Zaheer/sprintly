@@ -1,16 +1,13 @@
 import Link from "next/link";
-import { Zap } from "lucide-react";
+import { Logo } from "@/components/Logo";
 
 export function Footer() {
   return (
     <footer className="border-t border-border">
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 py-8 text-sm text-muted sm:flex-row">
         <div className="flex flex-col items-center gap-4 sm:flex-row">
-          <Link href="/" className="flex items-center gap-2 font-heading text-sm font-bold tracking-tight text-foreground">
-            <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <Zap className="h-4 w-4" fill="currentColor" strokeWidth={0} />
-            </span>
-            Sprint<span className="gradient-text">ly</span>
+          <Link href="/" className="text-foreground">
+            <Logo size="sm" />
           </Link>
           <p>© {new Date().getFullYear()} Sprintly. All rights reserved.</p>
         </div>

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { startOfWeek } from "date-fns";
+import { and, desc, eq, isNotNull, isNull, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { timeEntries } from "@/lib/db/schema";
 import { requireUser } from "@/lib/auth/require";
@@ -15,7 +16,24 @@ export async function GET() {
   });
 
   const active = rows.find((r) => !r.endedAt) ?? null;
-  return NextResponse.json({ entries: rows, active });
+
+  // Totals only count completed entries (durationSeconds is set once a
+  // timer stops) — the currently-running entry's live elapsed time is
+  // already shown separately by the timer widget itself.
+  const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 }).toISOString();
+  const [totals] = await db
+    .select({
+      totalSeconds: sql<number>`coalesce(sum(${timeEntries.durationSeconds}), 0)`,
+      weekSeconds: sql<number>`coalesce(sum(case when ${timeEntries.startedAt} >= ${weekStart} then ${timeEntries.durationSeconds} else 0 end), 0)`,
+    })
+    .from(timeEntries)
+    .where(and(eq(timeEntries.userId, user.id), isNotNull(timeEntries.durationSeconds)));
+
+  return NextResponse.json({
+    entries: rows,
+    active,
+    summary: { totalSeconds: totals?.totalSeconds ?? 0, weekSeconds: totals?.weekSeconds ?? 0 },
+  });
 }
 
 export async function POST(request: Request) {

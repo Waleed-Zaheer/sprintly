@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { Check, Zap } from "lucide-react";
+import { Check } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { ProductMockup } from "@/components/marketing/ProductMockup";
+import { Logo } from "@/components/Logo";
 
 const HIGHLIGHTS = ["Unlimited sprints and tasks", "One-click time tracking", "Free for a day, no card required"];
 
@@ -10,11 +11,8 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
     <div className="flex flex-1">
       <div className="flex w-full flex-col items-center justify-center px-6 py-16 lg:w-[42%] lg:px-12 xl:px-16">
         <div className="w-full max-w-md">
-          <Link href="/" className="mb-8 flex items-center gap-2 font-heading text-lg font-bold tracking-tight">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <Zap className="h-4 w-4" fill="currentColor" strokeWidth={0} />
-            </span>
-            Sprint<span className="gradient-text">ly</span>
+          <Link href="/" className="mb-8">
+            <Logo />
           </Link>
           <Card className="p-8">{children}</Card>
         </div>

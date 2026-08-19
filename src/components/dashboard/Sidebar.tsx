@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, ListChecks, Users, CreditCard, LogOut, Zap } from "lucide-react";
+import { LayoutDashboard, ListChecks, Users, CreditCard, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Logo } from "@/components/Logo";
 
 const LINKS = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
@@ -25,11 +26,8 @@ export function Sidebar({ name, email }: { name: string; email: string }) {
 
   return (
     <aside className="flex w-64 flex-col border-r border-border p-4">
-      <Link href="/" className="mb-6 flex items-center gap-2 px-2 font-heading text-lg font-bold tracking-tight">
-        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-          <Zap className="h-4 w-4" fill="currentColor" strokeWidth={0} />
-        </span>
-        Sprint<span className="gradient-text">ly</span>
+      <Link href="/" className="mb-6 px-2">
+        <Logo />
       </Link>
 
       <nav className="flex-1 space-y-1">
