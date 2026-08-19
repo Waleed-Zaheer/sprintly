@@ -1,0 +1,21 @@
+{
+  "nav": {
+    "features": "Recursos",
+    "pricing": "Preços",
+    "login": "Entrar",
+    "getStarted": "Começar"
+  },
+  "hero": {
+    "titlePrefix": "Acompanhe sprints e tempo",
+    "titleHighlight": "sem a correria toda",
+    "subtitle": "O Sprintly oferece a pessoas e empresas um só lugar para planejar sprints, controlar o tempo e saber exatamente para onde foi cada hora.",
+    "cta": "Comece grátis por um dia",
+    "ctaSecondary": "Ver preços"
+  },
+  "pricing": {
+    "title": "Planos simples que crescem com você",
+    "subtitle": "Comece grátis, faça upgrade quando estiver pronto.",
+    "perMonth": "/mês",
+    "seats": "vagas"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "nav": {
+    "features": "Fonctionnalités",
+    "pricing": "Tarifs",
+    "login": "Connexion",
+    "getStarted": "Commencer"
+  },
+  "hero": {
+    "titlePrefix": "Suivez vos sprints et votre temps",
+    "titleHighlight": "sans les tâches fastidieuses",
+    "subtitle": "Sprintly offre aux particuliers et aux entreprises un espace unique pour planifier des sprints, suivre le temps et savoir exactement où chaque heure est passée.",
+    "cta": "Essai gratuit d'un jour",
+    "ctaSecondary": "Voir les tarifs"
+  },
+  "pricing": {
+    "title": "Des forfaits simples qui évoluent avec vous",
+    "subtitle": "Commencez gratuitement, passez à la vitesse supérieure quand vous êtes prêt.",
+    "perMonth": "/mois",
+    "seats": "postes"
+  }
+}

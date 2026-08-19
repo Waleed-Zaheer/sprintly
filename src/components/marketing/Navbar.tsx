@@ -6,21 +6,22 @@ import { useTranslation } from "react-i18next";
 import { AnimatePresence, motion } from "framer-motion";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { UserMenu } from "@/components/UserMenu";
+import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Zap } from "lucide-react";
+import { Menu, X } from "lucide-react";
+import { useAuthStore } from "@/store/auth-store";
 
 export function Navbar() {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
+  const user = useAuthStore((state) => state.user);
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-md">
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <Link href="/" className="flex items-center gap-2 font-heading text-lg font-bold tracking-tight">
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Zap className="h-4 w-4" fill="currentColor" strokeWidth={0} />
-          </span>
-          Sprint<span className="gradient-text">ly</span>
+        <Link href="/">
+          <Logo />
         </Link>
 
         <div className="hidden items-center gap-8 text-sm font-medium text-muted sm:flex">
@@ -35,14 +36,20 @@ export function Navbar() {
         <div className="flex items-center gap-3">
           <LanguageSwitcher />
           <ThemeToggle />
-          <Button
-            variant="ghost"
-            size="sm"
-            className="hidden sm:inline-flex"
-            nativeButton={false}
-            render={<Link href="/login">{t("nav.login")}</Link>}
-          />
-          <Button size="sm" nativeButton={false} render={<Link href="/register">{t("nav.getStarted")}</Link>} />
+          {user ? (
+            <UserMenu />
+          ) : (
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="hidden sm:inline-flex"
+                nativeButton={false}
+                render={<Link href="/login">{t("nav.login")}</Link>}
+              />
+              <Button size="sm" nativeButton={false} render={<Link href="/register">{t("nav.getStarted")}</Link>} />
+            </>
+          )}
           <Button
             variant="ghost"
             size="icon"
@@ -80,11 +87,11 @@ export function Navbar() {
                 {t("nav.pricing")}
               </Link>
               <Link
-                href="/login"
+                href={user ? "/dashboard" : "/login"}
                 onClick={() => setOpen(false)}
                 className="py-3 transition-colors hover:text-foreground"
               >
-                {t("nav.login")}
+                {user ? "Dashboard" : t("nav.login")}
               </Link>
               <div className="flex items-center justify-between py-3">
                 <span>Theme</span>

@@ -1,0 +1,21 @@
+{
+  "nav": {
+    "features": "Funktionen",
+    "pricing": "Preise",
+    "login": "Anmelden",
+    "getStarted": "Loslegen"
+  },
+  "hero": {
+    "titlePrefix": "Sprints und Zeit erfassen",
+    "titleHighlight": "ohne den ganzen Aufwand",
+    "subtitle": "Sprintly bietet Einzelpersonen und Unternehmen einen zentralen Ort, um Sprints zu planen, Zeit zu erfassen und genau zu wissen, wofür jede Stunde verwendet wurde.",
+    "cta": "Einen Tag kostenlos starten",
+    "ctaSecondary": "Preise ansehen"
+  },
+  "pricing": {
+    "title": "Einfache Pläne, die mit Ihnen wachsen",
+    "subtitle": "Kostenlos starten, upgraden, wenn Sie bereit sind.",
+    "perMonth": "/Monat",
+    "seats": "Plätze"
+  }
+}
