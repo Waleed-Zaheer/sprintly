@@ -14,11 +14,80 @@ Sprint planning and time tracking for individuals and companies — with real br
 | Scheduling | Vercel Cron (`vercel.json`) + optional `node-cron` worker script | Vercel's free tier only allows daily cron; `scripts/cron-worker.ts` is there if you self-host and want hourly/30-min granularity. |
 | UI | Tailwind CSS v4, Framer Motion, a small shadcn/ui-style primitive layer (`src/components/ui/`, built on `class-variance-authority` + `tailwind-merge` + Radix `Slot`), `lucide-react` icons | Consistent, themeable (light/dark) design system. |
 | 3D / motion | Three.js via `@react-three/fiber` + `@react-three/drei`, `lottie-react` | Landing page hero visual and loading animations. |
-| i18n | `i18next` / `react-i18next` (English + Spanish included) | `src/i18n/locales/` — add more languages by dropping in another JSON file. |
+| i18n | `i18next` / `react-i18next` — English, Spanish, French, German, Portuguese, Chinese | `src/i18n/locales/` — add more languages by dropping in another JSON file and registering the code in `src/i18n/languages.ts`. |
 | Phone validation | `google-libphonenumber` | Validates/normalizes phone numbers to E.164 on signup. |
 | Dates | `date-fns` | Formatting sprint dates and tracked durations. |
 | Email | [Resend](https://resend.com) | Password-reset and team-invite emails. Free tier (100/day, 3k/month). |
 | Fraud/abuse detection | [ipapi.co](https://ipapi.co) (free, no key) for sign-up geolocation | Platform admins can see which IP/location each account signed up from and spot multi-accounting — see **Admin dashboard** below. |
+
+## Architecture
+
+Everything runs inside one Next.js deployment — UI, API routes, Stripe webhooks, and cron
+endpoints. There is no separate backend service to host, which is what makes the whole thing
+fit on free tiers.
+
+```text
+Browser ──▶ Next.js (Vercel)
+              │
+              ├─ Server Components ──▶ requireUser() ──▶ Turso (libSQL) via Drizzle
+              │                          re-reads the user every request
+              ├─ /api/*              ──▶ same auth guard, same database
+              ├─ /api/stripe/webhook ◀── Stripe (subscription lifecycle)
+              └─ /api/cron/*         ◀── Vercel Cron (daily) or scripts/cron-worker.ts
+                                            │
+                                            └──▶ Web Push ──▶ public/sw.js ──▶ OS notification
+                                                 (delivers even with the tab closed)
+```
+
+### Auth: JWT, but never trusted alone
+
+Sessions are a `jose`-signed JWT in an httpOnly cookie — no per-user cost as a company scales
+to 50 seats, unlike a hosted auth provider.
+
+The important detail is that the token is treated as an *identity claim only*, never as an
+authorization cache. `requireUser()` (`src/lib/auth/require.ts`) re-reads the account from
+the database on **every** request and re-checks `accountStatus`; `requirePlatformAdmin()`
+does the same for `isPlatformAdmin`. That means disabling an account or revoking admin
+access takes effect on the user's very next request, rather than whenever their 30-day token
+happens to expire. It costs one indexed read per request and removes a whole class of
+"revoked user still has access" bugs.
+
+### Tenancy
+
+`companies` → `users` → everything else. A Free/Individual user gets a company row of their
+own; an Enterprise signup makes that user the company `owner`, who can then invite up to 50
+teammates. Every sprint, task, and time entry hangs off the company, so data isolation is a
+property of the schema rather than something each query has to remember.
+
+### Billing is Stripe's job, not the app's
+
+The app never stores card data and never computes proration. Checkout and the Billing Portal
+are Stripe-hosted; `/api/stripe/webhook` listens for subscription lifecycle events and
+mirrors the result into the local `subscriptions` table. Stripe stays the source of truth for
+"is this subscription live" — the local row is a cache for fast reads, and the webhook is
+what keeps it honest.
+
+### Notifications are real OS notifications
+
+Not in-app toasts. A service worker (`public/sw.js`) plus VAPID Web Push means a sprint
+deadline reminder arrives with the browser closed. `push_subscriptions` stores each device's
+endpoint; `sendPushToUser()` (`src/lib/push.ts`) fans out to all of a user's devices. The
+same mechanism, plus `manifest.json`, makes the app installable as a PWA.
+
+### Scheduling has two modes on purpose
+
+Vercel's free tier caps cron at once per day, which is why `vercel.json` schedules
+`check-trials` and `sprint-reminders` daily. For finer granularity there's
+`scripts/cron-worker.ts` — a real `node-cron` process you can run anywhere that stays alive.
+Both paths hit the same authenticated `/api/cron/*` endpoints, so the app doesn't care which
+one is driving it.
+
+### Abuse detection
+
+Free trials invite multi-accounting. On signup the app records the client IP and a
+best-effort geolocation (`src/lib/geo.ts`, via ipapi.co — free, no key). `/admin/duplicate-ips`
+surfaces IPs shared by two or more accounts. This is the only reason IP data is collected,
+and the privacy policy says so.
 
 ## Plans
 
