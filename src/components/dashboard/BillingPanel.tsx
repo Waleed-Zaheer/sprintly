@@ -114,20 +114,31 @@ export function BillingPanel() {
       )}
 
       <div className="grid gap-4 sm:grid-cols-3">
-        {PLAN_LIST.filter((p) => p.stripePriceEnv).map((plan) => (
-          <Card key={plan.id}>
-            <CardContent>
-              <p className="font-semibold">{plan.name}</p>
-              <p className="mt-1 text-2xl font-bold">
-                ${plan.priceMonthly}
-                <span className="text-sm font-normal text-muted">/mo</span>
-              </p>
-              <Button onClick={() => upgrade(plan.id)} disabled={loadingPlan === plan.id} className="mt-4 w-full">
-                {loadingPlan === plan.id ? "Redirecting…" : `Switch to ${plan.name}`}
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
+        {PLAN_LIST.filter((p) => p.stripePriceEnv).map((plan) => {
+          const isCurrent = subscription?.plan === plan.id && subscription.status !== "canceled" && subscription.status !== "expired";
+          return (
+            <Card key={plan.id} className={isCurrent ? "ring-2 ring-primary" : undefined}>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <p className="font-semibold">{plan.name}</p>
+                  {isCurrent && <Badge className="border-primary/30 bg-primary/10 text-primary">Current</Badge>}
+                </div>
+                <p className="mt-1 text-2xl font-bold">
+                  ${plan.priceMonthly}
+                  <span className="text-sm font-normal text-muted">/mo</span>
+                </p>
+                <Button
+                  onClick={() => upgrade(plan.id)}
+                  disabled={loadingPlan === plan.id || isCurrent}
+                  variant={isCurrent ? "outline" : "default"}
+                  className="mt-4 w-full"
+                >
+                  {isCurrent ? "Current plan" : loadingPlan === plan.id ? "Redirecting…" : `Switch to ${plan.name}`}
+                </Button>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );
