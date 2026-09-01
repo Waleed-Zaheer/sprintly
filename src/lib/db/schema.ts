@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { sqliteTable, text, integer, uniqueIndex, index } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, uniqueIndex, index, primaryKey } from "drizzle-orm/sqlite-core";
 
 const id = () =>
   text("id")
@@ -92,6 +92,31 @@ export const subscriptions = sqliteTable(
   ],
 );
 
+// Records every Stripe webhook event we've finished processing, so a
+// retried delivery (Stripe guarantees at-least-once, including resends
+// after a success) is a no-op instead of re-running the state change.
+export const processedStripeEvents = sqliteTable("processed_stripe_events", {
+  eventId: text("event_id").primaryKey(),
+  type: text("type").notNull(),
+  processedAt: text("processed_at")
+    .notNull()
+    .default(sql`(current_timestamp)`),
+});
+
+// Fixed-window request counters for rate limiting (login, register,
+// forgot-password). Backed by the same DB rather than a new Redis/KV
+// service, since a request every 1-15 minutes per key is well within
+// SQLite's write throughput and avoids adding a paid dependency.
+export const rateLimitHits = sqliteTable(
+  "rate_limit_hits",
+  {
+    key: text("key").notNull(),
+    windowStart: integer("window_start").notNull(),
+    count: integer("count").notNull().default(0),
+  },
+  (table) => [primaryKey({ columns: [table.key, table.windowStart] })],
+);
+
 export const invitations = sqliteTable(
   "invitations",
   {
@@ -106,7 +131,10 @@ export const invitations = sqliteTable(
     expiresAt: text("expires_at").notNull(),
     ...timestamps,
   },
-  (table) => [index("invitations_company_status_idx").on(table.companyId, table.status)],
+  (table) => [
+    index("invitations_company_status_idx").on(table.companyId, table.status),
+    index("invitations_token_idx").on(table.token),
+  ],
 );
 
 export const sprints = sqliteTable(
@@ -165,6 +193,10 @@ export const timeEntries = sqliteTable(
     index("time_entries_user_idx").on(table.userId),
     index("time_entries_task_idx").on(table.taskId),
     index("time_entries_user_open_idx").on(table.userId, table.endedAt),
+    // A user can have at most one open (not-yet-stopped) timer at a time —
+    // enforced here, not just in application code, so a double-click or a
+    // duplicate request can't create two and corrupt duration reporting.
+    uniqueIndex("time_entries_one_running_idx").on(table.userId).where(sql`${table.endedAt} is null`),
   ],
 );
 
