@@ -2,10 +2,25 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, ListChecks, Users, CreditCard, LogOut } from "lucide-react";
+import { LayoutDashboard, ListChecks, Users, CreditCard, LogOut, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Logo } from "@/components/Logo";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+function initials(name: string) {
+  const parts = name.trim().split(/\s+/);
+  const chars = parts.length > 1 ? [parts[0][0], parts[parts.length - 1][0]] : [parts[0]?.[0], parts[0]?.[1]];
+  return chars.filter(Boolean).join("").toUpperCase() || "?";
+}
 
 const LINKS = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
@@ -49,19 +64,35 @@ export function Sidebar({ name, email }: { name: string; email: string }) {
         })}
       </nav>
 
-      <div className="mt-6 border-t border-border pt-4">
-        <p className="truncate text-sm font-medium">{name}</p>
-        <p className="truncate text-xs text-muted">{email}</p>
-        <div className="mt-3 flex items-center gap-2">
-          <button
-            onClick={handleLogout}
-            className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted transition-colors hover:text-foreground"
-          >
-            <LogOut className="h-3.5 w-3.5" />
-            Log out
-          </button>
-          <ThemeToggle />
-        </div>
+      <div className="mt-6 flex items-center gap-2 border-t border-border pt-4">
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <button className="flex flex-1 items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-surface">
+                <Avatar size="sm">
+                  <AvatarFallback>{initials(name)}</AvatarFallback>
+                </Avatar>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-medium">{name}</span>
+                  <span className="block truncate text-xs text-muted">{email}</span>
+                </span>
+                <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 text-muted" />
+              </button>
+            }
+          />
+          <DropdownMenuContent align="start" className="w-56">
+            <DropdownMenuLabel className="font-normal">
+              <span className="block truncate text-sm font-medium">{name}</span>
+              <span className="block truncate text-xs text-muted">{email}</span>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleLogout} variant="destructive">
+              <LogOut className="h-3.5 w-3.5" />
+              Log out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <ThemeToggle />
       </div>
     </aside>
   );
