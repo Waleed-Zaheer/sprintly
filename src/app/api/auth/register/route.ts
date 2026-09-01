@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { addDays } from "date-fns";
 import { db } from "@/lib/db/client";
 import { companies, subscriptions, users } from "@/lib/db/schema";
@@ -9,8 +9,13 @@ import { registerSchema } from "@/lib/validation";
 import { PLAN_DEFINITIONS } from "@/lib/plans";
 import { isValidPhone, formatPhoneE164 } from "@/lib/phone";
 import { getClientIp, lookupGeo } from "@/lib/geo";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
+  const ip = getClientIp(request) ?? "unknown";
+  const { allowed } = await checkRateLimit({ key: `register:${ip}`, limit: 10, windowMs: 60 * 60 * 1000 });
+  if (!allowed) return rateLimitResponse();
+
   const body = await request.json();
   const parsed = registerSchema.safeParse(body);
 
@@ -52,7 +57,6 @@ export async function POST(request: Request) {
   }
 
   const signupIp = getClientIp(request);
-  const geo = signupIp ? await lookupGeo(signupIp) : { country: null, region: null, city: null };
 
   await db.insert(users).values({
     id: userId,
@@ -63,10 +67,23 @@ export async function POST(request: Request) {
     companyId,
     role,
     signupIp,
-    signupCountry: geo.country,
-    signupRegion: geo.region,
-    signupCity: geo.city,
   });
+
+  // Geolocation is for abuse review, not for completing signup — resolve it
+  // after the response is sent instead of adding its latency (up to 2s) to
+  // every registration.
+  if (signupIp) {
+    after(async () => {
+      const geo = await lookupGeo(signupIp);
+      if (geo.country || geo.region || geo.city) {
+        await db
+          .update(users)
+          .set({ signupCountry: geo.country, signupRegion: geo.region, signupCity: geo.city })
+          .where(eq(users.id, userId))
+          .catch(() => {});
+      }
+    });
+  }
 
   const trialEndsAt = planDef.trialDays > 0 ? addDays(new Date(), planDef.trialDays).toISOString() : null;
 

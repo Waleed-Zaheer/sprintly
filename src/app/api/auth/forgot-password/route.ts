@@ -5,12 +5,22 @@ import { db } from "@/lib/db/client";
 import { users } from "@/lib/db/schema";
 import { forgotPasswordSchema } from "@/lib/validation";
 import { sendEmail, passwordResetEmail } from "@/lib/email";
+import { getClientIp } from "@/lib/geo";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 // Always returns the same generic response, whether or not the email is
 // registered — otherwise this endpoint becomes a way to enumerate accounts.
 const GENERIC_RESPONSE = { message: "If that email is registered, we've sent a password reset link." };
 
 export async function POST(request: Request) {
+  const ip = getClientIp(request) ?? "unknown";
+  // Also throttled per-email below the IP check, since this endpoint is an
+  // email-sending relay: a single IP shouldn't be able to spam one inbox
+  // through repeated small requests, or fan out across many IPs abusing the
+  // per-IP allowance.
+  const { allowed } = await checkRateLimit({ key: `forgot-password:${ip}`, limit: 5, windowMs: 10 * 60 * 1000 });
+  if (!allowed) return rateLimitResponse();
+
   const body = await request.json();
   const parsed = forgotPasswordSchema.safeParse(body);
   if (!parsed.success) {
@@ -18,6 +28,9 @@ export async function POST(request: Request) {
   }
 
   const email = parsed.data.email.toLowerCase();
+  const emailLimit = await checkRateLimit({ key: `forgot-password-email:${email}`, limit: 3, windowMs: 15 * 60 * 1000 });
+  if (!emailLimit.allowed) return NextResponse.json(GENERIC_RESPONSE);
+
   const user = await db.query.users.findFirst({ where: eq(users.email, email) });
 
   if (user && user.accountStatus === "active") {

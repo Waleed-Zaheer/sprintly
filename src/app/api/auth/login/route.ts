@@ -5,8 +5,14 @@ import { users } from "@/lib/db/schema";
 import { verifyPassword } from "@/lib/auth/password";
 import { createSessionCookie } from "@/lib/auth/session";
 import { loginSchema } from "@/lib/validation";
+import { getClientIp } from "@/lib/geo";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
+  const ip = getClientIp(request) ?? "unknown";
+  const { allowed } = await checkRateLimit({ key: `login:${ip}`, limit: 10, windowMs: 10 * 60 * 1000 });
+  if (!allowed) return rateLimitResponse();
+
   const body = await request.json();
   const parsed = loginSchema.safeParse(body);
 
