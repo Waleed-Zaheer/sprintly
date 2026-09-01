@@ -3,13 +3,20 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Users, UserPlus, Clock } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "@/components/sonner";
+
+function initials(name: string) {
+  const parts = name.trim().split(/\s+/);
+  const chars = parts.length > 1 ? [parts[0][0], parts[parts.length - 1][0]] : [parts[0]?.[0], parts[0]?.[1]];
+  return chars.filter(Boolean).join("").toUpperCase();
+}
 
 type Member = { id: string; name: string; email: string; role: string };
 type Invitation = { id: string; email: string; status: string };
@@ -95,20 +102,21 @@ export function TeamPanel() {
   return (
     <div className="space-y-6">
       <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-4 w-4 text-muted-foreground" />
+            Team seats
+          </CardTitle>
+        </CardHeader>
         <CardContent>
           {loading ? (
             <div className="space-y-3">
-              <Skeleton className="h-4 w-1/3" />
               <Skeleton className="h-4 w-2/3" />
               <Skeleton className="h-2 w-full" />
             </div>
           ) : (
             <>
-              <div className="flex items-center gap-2 text-sm font-medium text-muted">
-                <Users className="h-4 w-4" />
-                Team seats
-              </div>
-              <div className="mt-3 flex items-center justify-between text-sm">
+              <div className="flex items-center justify-between text-sm">
                 <span className="font-medium">Seats used</span>
                 <span className="text-muted">
                   {seatsUsed} / {seatLimit}
@@ -123,16 +131,16 @@ export function TeamPanel() {
       </Card>
 
       <Card>
+        <CardHeader>
+          <CardTitle>Invite by email</CardTitle>
+        </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="space-y-3">
-              <Skeleton className="h-4 w-1/4" />
-              <Skeleton className="h-9 w-full" />
-            </div>
+            <Skeleton className="h-9 w-full" />
           ) : (
             <form onSubmit={handleInvite} className="flex items-end gap-3">
               <div className="flex-1">
-                <Label htmlFor="invite-email" className="mb-1.5">
+                <Label htmlFor="invite-email" className="mb-1.5 sr-only">
                   Invite by email
                 </Label>
                 <Input
@@ -155,28 +163,33 @@ export function TeamPanel() {
       {error && <p className="text-sm text-danger">{error}</p>}
 
       <Card>
+        <CardHeader>
+          <CardTitle>Members</CardTitle>
+        </CardHeader>
         <CardContent>
           {loading ? (
             <div className="space-y-3">
-              <Skeleton className="h-4 w-1/4" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-2/3" />
+              <Skeleton className="h-9 w-full" />
+              <Skeleton className="h-9 w-full" />
+              <Skeleton className="h-9 w-2/3" />
             </div>
           ) : (
             <>
-              <h3 className="text-sm font-semibold text-muted">Members</h3>
-              <ul className="mt-3 space-y-2">
+              <ul className="space-y-1">
                 {members.map((m, i) => (
                   <motion.li
                     key={m.id}
                     initial={{ opacity: 0, x: -8 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.25, delay: i * 0.04 }}
-                    className="flex items-center justify-between text-sm"
+                    className="flex items-center gap-3 rounded-2xl px-2 py-2 text-sm hover:bg-muted/50"
                   >
-                    <span>
-                      {m.name} <span className="text-muted">— {m.email}</span>
+                    <Avatar>
+                      <AvatarFallback>{initials(m.name)}</AvatarFallback>
+                    </Avatar>
+                    <span className="flex-1 truncate">
+                      <span className="font-medium">{m.name}</span>{" "}
+                      <span className="text-muted">— {m.email}</span>
                     </span>
                     <Badge {...(ROLE_BADGE[m.role] ?? ROLE_BADGE.member)}>{m.role}</Badge>
                   </motion.li>
@@ -185,12 +198,16 @@ export function TeamPanel() {
 
               {pending.length > 0 && (
                 <>
-                  <h3 className="mt-5 text-sm font-semibold text-muted">Pending invites</h3>
-                  <ul className="mt-3 space-y-2">
+                  <h3 className="mt-5 mb-1 text-sm font-semibold text-muted">Pending invites</h3>
+                  <ul className="space-y-1">
                     {pending.map((p) => (
-                      <li key={p.id} className="flex items-center gap-2 text-sm text-muted">
-                        <Clock className="h-3.5 w-3.5 text-muted" />
-                        <span className="flex-1">{p.email}</span>
+                      <li key={p.id} className="flex items-center gap-3 rounded-2xl px-2 py-2 text-sm">
+                        <Avatar>
+                          <AvatarFallback>
+                            <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="flex-1 truncate text-muted">{p.email}</span>
                         <Badge variant="outline" className="border-warning/30 bg-warning/10 text-warning">
                           pending
                         </Badge>
