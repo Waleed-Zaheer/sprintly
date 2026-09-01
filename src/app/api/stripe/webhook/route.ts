@@ -3,8 +3,31 @@ import { eq } from "drizzle-orm";
 import type Stripe from "stripe";
 import { getStripe } from "@/lib/stripe";
 import { db } from "@/lib/db/client";
-import { companies, subscriptions } from "@/lib/db/schema";
+import { companies, subscriptions, users, processedStripeEvents } from "@/lib/db/schema";
 import type { Plan } from "@/lib/db/schema";
+import { sendEmail, paymentFailedEmail, trialEndingEmail } from "@/lib/email";
+import { SITE_URL } from "@/lib/site";
+
+// A subscription is billed either to a company (via its owner) or directly
+// to an individual user — look up whichever email applies so dunning/trial
+// emails can be sent without blocking the webhook response on failure.
+async function emailForSubscription(sub: { companyId: string | null; userId: string | null }) {
+  try {
+    if (sub.companyId) {
+      const [company] = await db.select().from(companies).where(eq(companies.id, sub.companyId)).limit(1);
+      if (!company) return null;
+      const [owner] = await db.select().from(users).where(eq(users.id, company.ownerId)).limit(1);
+      return owner?.email ?? null;
+    }
+    if (sub.userId) {
+      const [user] = await db.select().from(users).where(eq(users.id, sub.userId)).limit(1);
+      return user?.email ?? null;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
 
 export async function POST(request: Request) {
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -21,6 +44,16 @@ export async function POST(request: Request) {
     event = stripe.webhooks.constructEvent(payload, signature ?? "", secret);
   } catch {
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
+  }
+
+  // Stripe guarantees at-least-once delivery and can redeliver an event
+  // we already handled successfully. Claim the event id first — if
+  // another delivery already claimed it, no-op instead of re-running the
+  // state change below.
+  try {
+    await db.insert(processedStripeEvents).values({ eventId: event.id, type: event.type });
+  } catch {
+    return NextResponse.json({ received: true, duplicate: true });
   }
 
   switch (event.type) {
@@ -58,6 +91,52 @@ export async function POST(request: Request) {
         .update(subscriptions)
         .set({ status })
         .where(eq(subscriptions.stripeSubscriptionId, sub.id));
+      break;
+    }
+
+    case "invoice.payment_failed": {
+      const invoice = event.data.object as Stripe.Invoice;
+      const subscriptionId =
+        typeof invoice.parent?.subscription_details?.subscription === "string"
+          ? invoice.parent.subscription_details.subscription
+          : null;
+      if (!subscriptionId) break;
+
+      const [record] = await db
+        .update(subscriptions)
+        .set({ status: "past_due" })
+        .where(eq(subscriptions.stripeSubscriptionId, subscriptionId))
+        .returning();
+      if (!record) break;
+
+      const email = await emailForSubscription(record);
+      if (email) {
+        await sendEmail({
+          to: email,
+          subject: "We couldn't process your Sprintly payment",
+          html: paymentFailedEmail(`${SITE_URL}/dashboard/settings/billing`),
+        }).catch(() => {});
+      }
+      break;
+    }
+
+    case "customer.subscription.trial_will_end": {
+      const sub = event.data.object as Stripe.Subscription;
+      const [record] = await db
+        .select()
+        .from(subscriptions)
+        .where(eq(subscriptions.stripeSubscriptionId, sub.id))
+        .limit(1);
+      if (!record) break;
+
+      const email = await emailForSubscription(record);
+      if (email) {
+        await sendEmail({
+          to: email,
+          subject: "Your Sprintly trial is ending soon",
+          html: trialEndingEmail(`${SITE_URL}/dashboard/settings/billing`),
+        }).catch(() => {});
+      }
       break;
     }
 

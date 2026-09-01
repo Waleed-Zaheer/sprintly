@@ -55,3 +55,25 @@ export function teamInviteEmail(companyName: string, inviteUrl: string) {
     <p style="font-size: 13px; color: #6b6b80;">This invite expires in 7 days.</p>
   `);
 }
+
+export function paymentFailedEmail(billingUrl: string) {
+  return emailShell(`
+    <p>We couldn't charge your card for your Sprintly subscription. Your access continues for now, but please update your payment method to avoid an interruption.</p>
+    <p style="margin: 24px 0;">
+      <a href="${billingUrl}" style="background: #6d5efc; color: #fff; padding: 10px 20px; border-radius: 999px; text-decoration: none; font-weight: 600;">
+        Update payment method
+      </a>
+    </p>
+  `);
+}
+
+export function trialEndingEmail(billingUrl: string) {
+  return emailShell(`
+    <p>Your Sprintly trial ends in a few days. Add a payment method to keep your sprints, tasks, and time entries without interruption.</p>
+    <p style="margin: 24px 0;">
+      <a href="${billingUrl}" style="background: #6d5efc; color: #fff; padding: 10px 20px; border-radius: 999px; text-decoration: none; font-weight: 600;">
+        Choose a plan
+      </a>
+    </p>
+  `);
+}
