@@ -3,8 +3,30 @@
 import { useState } from "react";
 import { Ban, ShieldOff, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { toast } from "@/components/sonner";
 import type { AccountStatus } from "@/lib/db/schema";
+
+const CONFIRM_COPY: Partial<Record<AccountStatus, { title: string; description: string }>> = {
+  restricted: {
+    title: "Restrict this account?",
+    description: "They'll be signed out and unable to log back in until reactivated.",
+  },
+  disabled: {
+    title: "Disable this account?",
+    description: "They'll be signed out and unable to log back in until reactivated.",
+  },
+};
 
 /**
  * Restrict / disable / reactivate buttons for one user row, shared by both
@@ -21,9 +43,9 @@ export function AccountStatusActions({
   onChanged: (next: AccountStatus) => void;
 }) {
   const [updating, setUpdating] = useState<AccountStatus | null>(null);
+  const [pendingConfirm, setPendingConfirm] = useState<AccountStatus | null>(null);
 
-  async function setStatus(next: AccountStatus, confirmMessage?: string) {
-    if (confirmMessage && !window.confirm(confirmMessage)) return;
+  async function setStatus(next: AccountStatus) {
     setUpdating(next);
     try {
       const res = await fetch(`/api/admin/users/${userId}/status`, {
@@ -59,26 +81,46 @@ export function AccountStatusActions({
     );
   }
 
+  const confirmCopy = pendingConfirm ? CONFIRM_COPY[pendingConfirm] : undefined;
+
   return (
-    <div className="flex gap-1.5">
-      <Button
-        size="xs"
-        variant="outline"
-        disabled={updating !== null}
-        onClick={() => setStatus("restricted", "Restrict this account? They'll be signed out and unable to log back in until reactivated.")}
-      >
-        <ShieldOff className="h-3 w-3" />
-        Restrict
-      </Button>
-      <Button
-        size="xs"
-        variant="destructive"
-        disabled={updating !== null}
-        onClick={() => setStatus("disabled", "Disable this account? They'll be signed out and unable to log back in until reactivated.")}
-      >
-        <Ban className="h-3 w-3" />
-        Disable
-      </Button>
-    </div>
+    <AlertDialog open={pendingConfirm !== null} onOpenChange={(open) => !open && setPendingConfirm(null)}>
+      <div className="flex gap-1.5">
+        <AlertDialogTrigger
+          render={
+            <Button size="xs" variant="outline" disabled={updating !== null} onClick={() => setPendingConfirm("restricted")}>
+              <ShieldOff className="h-3 w-3" />
+              Restrict
+            </Button>
+          }
+        />
+        <AlertDialogTrigger
+          render={
+            <Button size="xs" variant="destructive" disabled={updating !== null} onClick={() => setPendingConfirm("disabled")}>
+              <Ban className="h-3 w-3" />
+              Disable
+            </Button>
+          }
+        />
+      </div>
+      <AlertDialogContent size="sm">
+        <AlertDialogHeader>
+          <AlertDialogTitle>{confirmCopy?.title}</AlertDialogTitle>
+          <AlertDialogDescription>{confirmCopy?.description}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            variant={pendingConfirm === "disabled" ? "destructive" : "default"}
+            onClick={() => {
+              if (pendingConfirm) setStatus(pendingConfirm);
+              setPendingConfirm(null);
+            }}
+          >
+            Confirm
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
